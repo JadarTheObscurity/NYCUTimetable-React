@@ -44,24 +44,24 @@ class Search extends React.Component{
     }
 
     const resultList = this.state.courseSearchResult.map((courseInfo) => {
-      const courseSem = courseInfo.courseSemester.substr(courseInfo.courseSemester.length-1, 1)
-      const courseAcy = courseInfo.courseSemester.substr(0, courseInfo.courseSemester.length-1)
+      const courseSem = courseInfo.sem;
+      const courseAcy = courseInfo.acy;
       const courseUrl = `https://timetable.nycu.edu.tw/?r=main/crsoutline&Acy=${courseAcy}&Sem=${courseSem}&CrsNo=${courseInfo.courseId}&lang=zh-tw`;
       return (
         <Box key={courseInfo.courseId} >
           <Card>
             <CardContent>
             <Typography variant="h5" component="div">
-              {courseInfo.courseName}
+              {courseInfo.cos_cname}
             </Typography>
             <Typography color="text.secondary">
               {courseInfo.coursePath}
             </Typography>
             <Typography color="text.secondary">
-              {courseInfo.courseTeacher}
+              {courseInfo.teacher}
             </Typography>
             <Typography color="text.secondary">
-              {courseInfo.courseTime}
+              {courseInfo.cos_time}
             </Typography>
             </CardContent>
             <CardActions>
@@ -70,24 +70,6 @@ class Search extends React.Component{
           </Card>
         </Box>
       );
-      // return (
-      //     <List key={courseInfo.courseId}>
-      //       <ListItem disablePadding>
-      //         <ListItemButton onClick={() => {this.setState({courseUrl: courseUrl})}}>
-      //           <ListItemText 
-      //             primary={courseInfo.courseName} 
-      //             secondary={
-      //               <React.Fragment>
-      //               <p>{courseInfo.coursePath}</p>
-      //               <p>{courseInfo.courseTeacher}</p>
-      //               <p>{courseInfo.courseTime}</p>
-      //               </React.Fragment>
-      //             }
-      //           />
-      //         </ListItemButton>
-      //       </ListItem>
-      //     </List>
-      // );
     })
     return (
       <Stack>
@@ -151,8 +133,8 @@ class Search extends React.Component{
     this.setState({keyWord: searchWord});
     const regex = RegExp(`${searchWord}`, "gi");
     let coursesMatch = coursesData.filter(course => {
-      return (course.courseName.match(regex) && this.state.filterCourse) ||
-      (course.courseTeacher.match(regex) && this.state.filterTeacher) ||
+      return (course.cos_cname.match(regex) && this.state.filterCourse) ||
+      (course.teacher.match(regex) && this.state.filterTeacher) ||
       (course.coursePath.match(regex) && this.state.filterPath)
     })
     console.log(coursesMatch);
