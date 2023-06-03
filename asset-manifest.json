@@ -1,0 +1,13 @@
+{
+  "files": {
+    "main.css": "/NYCUTimetable-React/static/css/main.d1afc7fe.css",
+    "main.js": "/NYCUTimetable-React/static/js/main.a8894dad.js",
+    "index.html": "/NYCUTimetable-React/index.html",
+    "main.d1afc7fe.css.map": "/NYCUTimetable-React/static/css/main.d1afc7fe.css.map",
+    "main.a8894dad.js.map": "/NYCUTimetable-React/static/js/main.a8894dad.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.d1afc7fe.css",
+    "static/js/main.a8894dad.js"
+  ]
+}

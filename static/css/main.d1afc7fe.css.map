@@ -1,0 +1,1 @@
+{"version":3,"file":"static/css/main.d1afc7fe.css","mappings":"AAAA,cAGI,kBAAmB,CAFnB,WAAY,CAGZ,gBAAiB,CAFjB,SAGJ","sources":["index.css"],"sourcesContent":[".courseIframe {\n    height: 100%;\n    width: 80%;\n    align-items: center;\n    max-height: 700px;\n}"],"names":[],"sourceRoot":""}
