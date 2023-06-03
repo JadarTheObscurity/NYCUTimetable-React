@@ -3,38 +3,92 @@ import ReactDOM from 'react-dom/client';
 import './index.css';
 import coursesData from './result.json'
 import TextField from '@mui/material/TextField'
-import {Box, Button, Card, FormControlLabel, List, ListItem, ListItemButton, ListItemText, Stack, Switch, Typography, CardActions, CardContent} from '@mui/material';
+import {Box, Button, Card, FormControlLabel, List, ListItem, ListItemButton, ListItemText, Stack, Switch, Typography, CardActions, CardContent, Paper} from '@mui/material';
 import Grid from '@mui/material/Unstable_Grid2'
 import Container from '@mui/material/Container'
 
 class SearchBar extends React.Component {
-  constructor (props){
-    super(props);
-    this.state = {
-      courses: coursesData
-    };
-  }
   render() {
     return (
-      <>
-        <TextField placeholder='課程名稱或授課老師' onChange={event => this.props.onSearch(event.target.value)}/>
-      </>
+      <TextField placeholder='課程名稱或授課老師' onChange={event => this.props.onSearch(event.target.value)}/>
     )
-
   }
 }
 
-class FilterTime extends React.Component {
+class TimeSlotButton extends React.Component {
+  constructor(props) {
+    super(props);
+    this.selected = false;
+  }
+  render() {
+    return (
+      <Paper onClick={this.handleClick.bind(this)} sx={{
+        backgroundColor: this.selected ? 'green' : 'white',
+      }}>{this.props.timeslot}</Paper>
+    )
+  }
+
+  handleClick(e) {
+    console.log(e);
+    console.log(this.props.timeslot);
+    console.log(this.selected);
+    this.selected = !this.selected;
+    this.props.onClick(this.props.timeslot, this.selected);
+  }
+}
+
+class FilterTimeSlot extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      selectedTimeSlot: new Set(),
+
+    }
+  }
 
   render() {
-    
-      let timeList = [];
-      for (let i = 0; i < 7; i++) {
-        timeList.push(<p>hi</p>);
-      }
+    const dates = ['M', 'T', 'W', 'R', 'F', 'S', 'U']
+    const timeSlotsGrid = dates.map((date) => {
+      return (
+        <Grid item xs={1}>
+          <Stack>
+            {this.createTimeSlot(date)}
+          </Stack>
+        </Grid>
+      )
+    })
     return (
-      timeList
+      <Box>
+        <Grid container>
+          {timeSlotsGrid}
+        </Grid>
+      </Box>
     );
+  }
+
+  createTimeSlot(date) {
+    let timeSlots = [];
+    const timeSlotsOption = ['y', 'z', '1', '2', '3', '4', 'n', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd'];
+    timeSlotsOption.forEach((time) => {
+      timeSlots.push(
+        <TimeSlotButton timeslot={date + time} onClick={this.handleTimeSlotButtonClicked.bind(this)}/>
+      )
+
+    });
+    return timeSlots;
+  }
+  
+  handleTimeSlotButtonClicked = (timeslot, selected) => {
+    console.log(timeslot);
+    if (selected && !this.state.selectedTimeSlot.has(timeslot)) {
+      this.state.selectedTimeSlot.add(timeslot);
+    }
+    else if (!selected && this.state.selectedTimeSlot.has(timeslot)) {
+      this.state.selectedTimeSlot.delete(timeslot);
+    }
+
+    // setTimeSlot(timeslot);
+    this.props.onSelectFilterTimeSlot(this.state.selectedTimeSlot);
   }
 
 }
@@ -79,6 +133,9 @@ class SearchResult extends React.Component {
     })
     return (
       <Stack>
+        <Typography>
+          搜尋結果：{this.props.courseSearchResult.length} 堂課
+        </Typography>
        {resultList} 
       </Stack>
       );
@@ -90,19 +147,15 @@ class Search extends React.Component{
   constructor(props) {
     super(props);
     this.state = {
-      keyWord: null,
+      searchWord: "",
       courseSearchResult: null,
       courseUrl: null,
       filterCourse: true,
       filterTeacher: false,
       filterPath: false,
-      filterTimeSlot: [],
+      filterTimeSlot: new Set(),
+      filterTimeSlotAll: true, // true: filterTimeSlot is all, false: filterTimeSlot is any
     }
-  }
-
-  handleFilterSwitch(event) {
-    console.log(this)
-    console.log(event);
   }
 
   render() {
@@ -119,13 +172,13 @@ class Search extends React.Component{
                 <Box>
                   <FormControlLabel control={<Switch defaultChecked onChange={(event) => {
                     console.log(event.target.checked);
-                    this.setState({filterCourse: event.target.checked}, () => {this.findMatch(this.state.keyWord)});
+                    this.setState({filterCourse: event.target.checked}, () => {this.findMatch(this.state.searchWord)});
                   }}/>} label="課程名稱" />
                   <FormControlLabel control={<Switch onChange={(event) => {
-                    this.setState({filterTeacher: event.target.checked}, () => {this.findMatch(this.state.keyWord)});
+                    this.setState({filterTeacher: event.target.checked}, () => {this.findMatch(this.state.searchWord)});
                   }}/>} label="授課老師" />
                       <FormControlLabel control={<Switch onChange={(event) => {
-                        this.setState({filterPath: event.target.checked}, () => {this.findMatch(this.state.keyWord)});
+                        this.setState({filterPath: event.target.checked}, () => {this.findMatch(this.state.searchWord)});
                   }}/>} label="課程路徑" />
                     </Box>
               </Stack>
@@ -134,24 +187,38 @@ class Search extends React.Component{
             </Container>
           </Grid>
           <Grid xs={7}>
-            <FilterTime/>
+            <FilterTimeSlot onSelectFilterTimeSlot={this.handleFilterTimeSlot}/>
           </Grid>
       </Grid>
       </>
 
     );
   }
+
+  handleFilterSwitch(event) {
+    console.log(this)
+    console.log(event);
+  }
+
+  handleFilterTimeSlot = (filterTimeSlot) => {
+    console.log(`handleFilterTimeSlot: ${[...filterTimeSlot]}`)
+    this.setState({filterTimeSlot: filterTimeSlot}, () => {this.findMatch(this.state.searchWord)});
+  }
+  
   handleSearch(searchWord) {
     this.findMatch(searchWord);
 
   }
+
   findMatch(searchWord) {
+    searchWord = searchWord.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
     console.log(this.state)
-    if (searchWord === '') {
+    if (searchWord === '' && this.state.filterTimeSlot.size === 0) {
       this.setState({courseSearchResult: null});
       return
     }
-    this.setState({keyWord: searchWord});
+    this.setState({searchWord: searchWord});
     const regex = RegExp(`${searchWord}`, "gi");
     let courseIds = new Set();
     let coursesMatch = coursesData.filter(course => {
@@ -168,12 +235,19 @@ class Search extends React.Component{
     })
 
     // Filter date
-    if (this.state.filterTimeSlot.length != 0) {
+    if (this.state.filterTimeSlot  && this.state.filterTimeSlot.size != 0) {
       coursesMatch = coursesMatch.filter(course => {
         let cosTime = course.cos_time;
         const cosTimeSlots = this.decodeCosTime(cosTime);
-        const filteredArray = this.state.filterTimeSlot.filter(value => cosTimeSlots.includes(value));
-        return filteredArray.length > 0;   
+        if (cosTimeSlots.length === 0) return false;
+        if (this.state.filterTimeSlotAll) {
+          return cosTimeSlots.every(value => this.state.filterTimeSlot.has(value));
+        }
+        else {
+          return cosTimeSlots.some(value => this.state.filterTimeSlot.has(value));
+        }
+        // const filteredArray = [...this.state.filterTimeSlot].filter(value => cosTimeSlots.includes(value));
+        // return filteredArray.length > 0;   
       });
     }
     
@@ -205,13 +279,11 @@ class Search extends React.Component{
 
     const regex = new RegExp(`[${date.join('|')}][${Object.keys(timeInterval).join('|')}]+`, 'gi')
     let courseTimeSlot = []
-    console.log(cosTimeList);
     cosTimeList.forEach((cosTime) => {
       const cosTimeInfo = cosTime.split('-')[0].match(regex);
       if (cosTimeInfo) {
         console.log(cosTimeInfo);
         cosTimeInfo.reduce((acc, cur) => {
-          console.log(acc);
           let timeSlotCnt = cur.length-1;
           const date = cur[0];
           for (let i = 0; i < timeSlotCnt; i++) {
