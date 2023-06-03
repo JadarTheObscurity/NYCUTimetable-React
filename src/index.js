@@ -23,7 +23,9 @@ class TimeSlotButton extends React.Component {
   render() {
     return (
       <Paper onClick={this.handleClick.bind(this)} sx={{
-        backgroundColor: this.selected ? 'green' : 'white',
+        backgroundColor: this.selected ? '#07e493' : 'white',
+        textAlign: 'center',
+        userSelect: 'none',
       }}>{this.props.timeslot}</Paper>
     )
   }
@@ -48,19 +50,20 @@ class FilterTimeSlot extends React.Component {
 
   render() {
     const dates = ['M', 'T', 'W', 'R', 'F', 'S', 'U']
+    const timeSlotTimes = ["6:00-6:50", "7:00-7:50", "8:00-8:50", "9:00-9:50", "10:10-11:00", "11:10-12:00", "12:20-13:10", "13:20-14:10", "14:20-15:10", "15:30-16:20", "16:30-17:20", "17:30-18:20", "18:30-19:20", "19:30-20:20", "20:30-21:20", "21:30-22:20"];
     const timeSlotsGrid = dates.map((date) => {
       return (
-        <Grid item xs={1}>
-          <Stack>
+          <Grid item xs={1}> 
             {this.createTimeSlot(date)}
-          </Stack>
-        </Grid>
+          </Grid> 
       )
     })
     return (
       <Box>
-        <Grid container>
-          {timeSlotsGrid}
+        <Grid container spacing={1}>
+          {/* <Grid item xs={1}> */}
+            {timeSlotsGrid}
+          {/* </Grid> */}
         </Grid>
       </Box>
     );
