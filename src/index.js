@@ -6,259 +6,51 @@ import TextField from '@mui/material/TextField'
 import {Box, Button, Card, FormControlLabel, List, ListItem, ListItemButton, ListItemText, Stack, Switch, Typography, CardActions, CardContent, Paper} from '@mui/material';
 import Grid from '@mui/material/Unstable_Grid2'
 import Container from '@mui/material/Container'
+import {useState} from 'react';
 
-class SearchBar extends React.Component {
-  render() {
-    return (
-      <TextField placeholder='課程名稱或授課老師' onChange={event => this.props.onSearch(event.target.value)}/>
-    )
-  }
-}
-
-class TimeSlotButton extends React.Component {
-  constructor(props) {
-    super(props);
-    this.selected = false;
-  }
-  render() {
-    return (
-      <Paper onClick={this.handleClick.bind(this)} sx={{
-        backgroundColor: this.selected ? '#07e493' : 'white',
-        textAlign: 'center',
-        userSelect: 'none',
-      }}>{this.props.timeslot}</Paper>
-    )
-  }
-
-  handleClick(e) {
-    console.log(e);
-    console.log(this.props.timeslot);
-    console.log(this.selected);
-    this.selected = !this.selected;
-    this.props.onClick(this.props.timeslot, this.selected);
-  }
-}
-
-class FilterTimeSlot extends React.Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      selectedTimeSlot: new Set(),
-
-    }
-  }
-
-  render() {
-    const dates = ['M', 'T', 'W', 'R', 'F', 'S', 'U']
-    const timeSlotTimes = ["6:00-6:50", "7:00-7:50", "8:00-8:50", "9:00-9:50", "10:10-11:00", "11:10-12:00", "12:20-13:10", "13:20-14:10", "14:20-15:10", "15:30-16:20", "16:30-17:20", "17:30-18:20", "18:30-19:20", "19:30-20:20", "20:30-21:20", "21:30-22:20"];
-    const timeSlotsGrid = dates.map((date) => {
-      return (
-          <Grid item xs={1}> 
-            {this.createTimeSlot(date)}
-          </Grid> 
-      )
-    })
-    return (
-      <Box>
-        <Grid container spacing={1}>
-          {/* <Grid item xs={1}> */}
-            {timeSlotsGrid}
-          {/* </Grid> */}
+function SearchTimeTable() {
+  const [searchWord, setSearchWord] = useState('');
+  const [filterTimeSlot, setFilterTimeSlot] = useState(new Array(0));
+  return (
+    <Box>
+      <Grid container spacing={2}>
+        <Grid item xs={3}>
+          <SearchWordInput 
+            searchWord={searchWord}
+            setSearchWord={setSearchWord}
+          />
+          <div>Serach {searchWord}</div>
+          <div>FilterTimeSlot {filterTimeSlot}</div>
+          <SearchResult 
+            searchWord={searchWord}
+            filterTimeSlot={filterTimeSlot}
+          />
         </Grid>
-      </Box>
-    );
-  }
-
-  createTimeSlot(date) {
-    let timeSlots = [];
-    const timeSlotsOption = ['y', 'z', '1', '2', '3', '4', 'n', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd'];
-    timeSlotsOption.forEach((time) => {
-      timeSlots.push(
-        <TimeSlotButton timeslot={date + time} onClick={this.handleTimeSlotButtonClicked.bind(this)}/>
-      )
-
-    });
-    return timeSlots;
-  }
-  
-  handleTimeSlotButtonClicked = (timeslot, selected) => {
-    console.log(timeslot);
-    if (selected && !this.state.selectedTimeSlot.has(timeslot)) {
-      this.state.selectedTimeSlot.add(timeslot);
-    }
-    else if (!selected && this.state.selectedTimeSlot.has(timeslot)) {
-      this.state.selectedTimeSlot.delete(timeslot);
-    }
-
-    // setTimeSlot(timeslot);
-    this.props.onSelectFilterTimeSlot(this.state.selectedTimeSlot);
-  }
-
-}
-
-class SearchResult extends React.Component {
-  render() {
-    return this.renderCourseList();
-
-  }
-  renderCourseList() {
-    if (!this.props.courseSearchResult) {
-      return null
-    }
-
-    const resultList = this.props.courseSearchResult.map((courseInfo) => {
-      const courseSem = courseInfo.sem;
-      const courseAcy = courseInfo.acy;
-      const courseUrl = `https://timetable.nycu.edu.tw/?r=main/crsoutline&Acy=${courseAcy}&Sem=${courseSem}&CrsNo=${courseInfo.courseId}&lang=zh-tw`;
-      return (
-        <Box key={courseInfo.cos_id} >
-          <Card>
-            <CardContent>
-            <Typography variant="h5" component="div">
-              {courseInfo.cos_cname}
-            </Typography>
-            <Typography color="text.secondary">
-              {courseInfo.coursePath}
-            </Typography>
-            <Typography color="text.secondary">
-              {courseInfo.teacher}
-            </Typography>
-            <Typography color="text.secondary">
-              {courseInfo.cos_time}
-            </Typography>
-            </CardContent>
-            <CardActions>
-              <Button onClick={() => {this.setState({courseUrl: courseUrl})}}>課程大綱</Button>
-            </CardActions>
-          </Card>
-        </Box>
-      );
-    })
-    return (
-      <Stack>
-        <Typography>
-          搜尋結果：{this.props.courseSearchResult.length} 堂課
-        </Typography>
-       {resultList} 
-      </Stack>
-      );
-  }
-
-}
-
-class Search extends React.Component{
-  constructor(props) {
-    super(props);
-    this.state = {
-      searchWord: "",
-      courseSearchResult: null,
-      courseUrl: null,
-      filterCourse: true,
-      filterTeacher: false,
-      filterPath: false,
-      filterTimeSlot: new Set(),
-      filterTimeSlotAll: true, // true: filterTimeSlot is all, false: filterTimeSlot is any
-    }
-  }
-
-  render() {
-    // Search the course with the name
-    // let resultList = this.renderCourseList();
-
-    return ( 
-      <> 
-        <Grid container spacing={2}>
-          <Grid xs={5} height={"700px"}>
-            <Container>
-              <Stack>
-                <SearchBar onSearch={this.handleSearch.bind(this)}/>
-                <Box>
-                  <FormControlLabel control={<Switch defaultChecked onChange={(event) => {
-                    console.log(event.target.checked);
-                    this.setState({filterCourse: event.target.checked}, () => {this.findMatch(this.state.searchWord)});
-                  }}/>} label="課程名稱" />
-                  <FormControlLabel control={<Switch onChange={(event) => {
-                    this.setState({filterTeacher: event.target.checked}, () => {this.findMatch(this.state.searchWord)});
-                  }}/>} label="授課老師" />
-                      <FormControlLabel control={<Switch onChange={(event) => {
-                        this.setState({filterPath: event.target.checked}, () => {this.findMatch(this.state.searchWord)});
-                  }}/>} label="課程路徑" />
-                    </Box>
-              </Stack>
-              <SearchResult courseSearchResult={this.state.courseSearchResult}/>
-              {/* {resultList} */}
-            </Container>
-          </Grid>
-          <Grid xs={7}>
-            <FilterTimeSlot onSelectFilterTimeSlot={this.handleFilterTimeSlot}/>
-          </Grid>
+        <Grid item xs={9}>
+          <TimeSlotFilter 
+            setFilterTimeSlot={setFilterTimeSlot}
+          >
+          </TimeSlotFilter>
+        </Grid>
       </Grid>
-      </>
+    </Box>
+  )
+}
 
-    );
-  }
+function SearchWordInput( {searchWord, setSearchWord} ) {
+  return (
+    <Box>
+      <TextField 
+        placeholder='課程名稱或授課老師' 
+        value={searchWord}
+        onChange={event => setSearchWord(event.target.value)}
+      />
+    </Box>
+  )
+}
 
-  handleFilterSwitch(event) {
-    console.log(this)
-    console.log(event);
-  }
-
-  handleFilterTimeSlot = (filterTimeSlot) => {
-    console.log(`handleFilterTimeSlot: ${[...filterTimeSlot]}`)
-    this.setState({filterTimeSlot: filterTimeSlot}, () => {this.findMatch(this.state.searchWord)});
-  }
-  
-  handleSearch(searchWord) {
-    this.findMatch(searchWord);
-
-  }
-
-  findMatch(searchWord) {
-    searchWord = searchWord.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-
-    console.log(this.state)
-    if (searchWord === '' && this.state.filterTimeSlot.size === 0) {
-      this.setState({courseSearchResult: null});
-      return
-    }
-    this.setState({searchWord: searchWord});
-    const regex = RegExp(`${searchWord}`, "gi");
-    let courseIds = new Set();
-    let coursesMatch = coursesData.filter(course => {
-      return (course.cos_cname.match(regex) && this.state.filterCourse) ||
-      (course.teacher.match(regex) && this.state.filterTeacher) ||
-      (course.coursePath.match(regex) && this.state.filterPath)
-    }).filter(course => {
-      if (courseIds.has(course.cos_id)) {
-        return false;
-      } else {
-        courseIds.add(course.cos_id);
-        return true;
-      }
-    })
-
-    // Filter date
-    if (this.state.filterTimeSlot  && this.state.filterTimeSlot.size != 0) {
-      coursesMatch = coursesMatch.filter(course => {
-        let cosTime = course.cos_time;
-        const cosTimeSlots = this.decodeCosTime(cosTime);
-        if (cosTimeSlots.length === 0) return false;
-        if (this.state.filterTimeSlotAll) {
-          return cosTimeSlots.every(value => this.state.filterTimeSlot.has(value));
-        }
-        else {
-          return cosTimeSlots.some(value => this.state.filterTimeSlot.has(value));
-        }
-        // const filteredArray = [...this.state.filterTimeSlot].filter(value => cosTimeSlots.includes(value));
-        // return filteredArray.length > 0;   
-      });
-    }
-    
-    console.log(coursesMatch);
-    coursesMatch = coursesMatch.length < 100 ? coursesMatch : coursesMatch.slice(0, 100);
-    this.setState({courseSearchResult: coursesMatch});
-  }
-  decodeCosTime(cosTime) {
+function findCourse(searchWord, filterTimeSlot) {
+  function decodeCosTime(cosTime) {
     let cosTimeList = cosTime.split(',');
     const date = ['M', 'T', 'W', 'R', 'F', 'S', 'U'];
     const timeInterval = {
@@ -301,10 +93,150 @@ class Search extends React.Component{
     return courseTimeSlot;
 
   }
+    searchWord = searchWord.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
+    if (searchWord === '' && filterTimeSlot.size === 0) {
+      return null;
+    }
+    const regex = RegExp(`${searchWord}`, "gi");
+    let courseIds = new Set();
+    let coursesMatch = coursesData.filter(course => {
+      return (course.cos_cname.match(regex)) || //&& this.state.filterCourse) ||
+      (course.teacher.match(regex)) || //&& this.state.filterTeacher) ||
+      (course.coursePath.match(regex))  //&& this.state.filterPath)
+    }).filter(course => {
+      if (courseIds.has(course.cos_id)) {
+        return false;
+      } else {
+        courseIds.add(course.cos_id);
+        return true;
+      }
+    })
+    if (filterTimeSlot  && filterTimeSlot.size != 0) {
+      coursesMatch = coursesMatch.filter(course => {
+        let cosTime = course.cos_time;
+        const cosTimeSlots = decodeCosTime(cosTime);
+        if (cosTimeSlots.length === 0) return false;
+        if (true) { // FilterSlotAll
+          return cosTimeSlots.every(value => filterTimeSlot.includes(value));
+        }
+        else {
+          return cosTimeSlots.some(value => filterTimeSlot.includes(value));
+        }
+        // const filteredArray = [...this.state.filterTimeSlot].filter(value => cosTimeSlots.includes(value));
+        // return filteredArray.length > 0;   
+      });
+    }
+    
+    console.log(coursesMatch);
+    coursesMatch = coursesMatch.length < 100 ? coursesMatch : coursesMatch.slice(0, 100);
+    return coursesMatch;
 }
+function SearchResult ({ searchWord , filterTimeSlot}) {
+  const courseSearchResult = findCourse(searchWord, filterTimeSlot);
+  console.log(courseSearchResult);
+  if (!courseSearchResult) {
+    return ( <></>);
+  }
+  const resultList = courseSearchResult.map((courseInfo) => {
+      const courseSem = courseInfo.sem;
+      const courseAcy = courseInfo.acy;
+      const courseUrl = `https://timetable.nycu.edu.tw/?r=main/crsoutline&Acy=${courseAcy}&Sem=${courseSem}&CrsNo=${courseInfo.courseId}&lang=zh-tw`;
+      return (
+        <Box key={courseInfo.cos_id} >
+          <Card>
+            <CardContent>
+            <Typography variant="h5" component="div">
+              {courseInfo.cos_cname}
+            </Typography>
+            <Typography color="text.secondary">
+              {courseInfo.coursePath}
+            </Typography>
+            <Typography color="text.secondary">
+              {courseInfo.teacher}
+            </Typography>
+            <Typography color="text.secondary">
+              {courseInfo.cos_time}
+            </Typography>
+            </CardContent>
+            <CardActions>
+              <Button onClick={() => {this.setState({courseUrl: courseUrl})}}>課程大綱</Button>
+            </CardActions>
+          </Card>
+        </Box>
+      );
+  });
+  return (
+    <Stack>
+      {resultList}
+    </Stack>
+  )
+}
+
+function SearchWordFilter() {
+  return (
+    <Box>
+      <FormControlLabel
+        control={<Switch />}
+        label="只顯示有空堂的課程"
+      />
+    </Box>
+  )
+}
+
+function TimeSlotFilter( {setFilterTimeSlot} ) {
+  const [selectedTimeSlot, setSelectedTimeSlot] = useState(new Set());
+  console.log(`SelectedTimeSlot ${selectedTimeSlot}`);
+  function handleClick (timeSlot) {
+    console.log(`${timeSlot} : ${selectedTimeSlot.has(timeSlot)}`)
+    if (selectedTimeSlot.has(timeSlot)) {
+      selectedTimeSlot.delete(timeSlot)
+    }
+    else {
+      selectedTimeSlot.add(timeSlot)
+    }
+    setSelectedTimeSlot(new Set([...selectedTimeSlot]));
+    setFilterTimeSlot([...selectedTimeSlot])
+  }
+
+  const dates = ['M', 'T', 'W', 'R', 'F', 'S', 'U'];
+  const timeOption = ['y', 'z', '1', '2', '3', '4', 'n', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd'];;
+
+  const timeSlotGrid = dates.map((date) => {
+    const timeSlots = timeOption.map((time) => {
+      const timeSlot = date+time;
+      return (
+        <TimeSlotButton timeSlot={timeSlot} selectedTimeSlot={selectedTimeSlot} onClick={handleClick}></TimeSlotButton>
+      )
+    })
+    return ( 
+      <Grid item key={date} xs={1}>
+        {timeSlots}
+      </Grid>
+    )
+  })
+  return (
+    <Grid container spacing={1}>
+      {timeSlotGrid}
+    </Grid>
+  )
+}
+
+function TimeSlotButton ( {timeSlot, selectedTimeSlot, onClick} ) {
+  return (
+    <Paper
+      sx = {{
+        backgroundColor : selectedTimeSlot.has(timeSlot) ? 'green' : 'white'
+      }}
+      onClick={() => {onClick(timeSlot)}}
+    >{timeSlot}</Paper>
+  )
+}
+
+
+
   // ========================================
   
-  const root = ReactDOM.createRoot(document.getElementById("root"));
-  root.render(<Search />);
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(<SearchTimeTable />);
   
