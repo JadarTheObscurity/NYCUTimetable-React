@@ -1,4 +1,5 @@
 import React from 'react';
+import { FixedSizeList } from 'react-window';
 import ReactDOM from 'react-dom/client';
 import './index.css';
 import coursesData from './result.json'
@@ -95,7 +96,7 @@ function findCourse(searchWord, filterTimeSlot) {
   }
     searchWord = searchWord.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
-    if (searchWord === '' && filterTimeSlot.size === 0) {
+    if (searchWord === '' && filterTimeSlot.length === 0) {
       return null;
     }
     const regex = RegExp(`${searchWord}`, "gi");
@@ -112,7 +113,8 @@ function findCourse(searchWord, filterTimeSlot) {
         return true;
       }
     })
-    if (filterTimeSlot  && filterTimeSlot.size != 0) {
+    console.log("findCourse search word filter: ",coursesMatch);
+    if (filterTimeSlot  && filterTimeSlot.length !== 0) {
       coursesMatch = coursesMatch.filter(course => {
         let cosTime = course.cos_time;
         const cosTimeSlots = decodeCosTime(cosTime);
@@ -123,27 +125,25 @@ function findCourse(searchWord, filterTimeSlot) {
         else {
           return cosTimeSlots.some(value => filterTimeSlot.includes(value));
         }
-        // const filteredArray = [...this.state.filterTimeSlot].filter(value => cosTimeSlots.includes(value));
-        // return filteredArray.length > 0;   
       });
     }
     
-    console.log(coursesMatch);
+    console.log("findCourse time filter: ",coursesMatch);
     coursesMatch = coursesMatch.length < 100 ? coursesMatch : coursesMatch.slice(0, 100);
     return coursesMatch;
 }
 function SearchResult ({ searchWord , filterTimeSlot}) {
   const courseSearchResult = findCourse(searchWord, filterTimeSlot);
-  console.log(courseSearchResult);
+  console.log("課程搜尋結果: ", courseSearchResult);
   if (!courseSearchResult) {
     return ( <></>);
   }
   const resultList = courseSearchResult.map((courseInfo) => {
       const courseSem = courseInfo.sem;
       const courseAcy = courseInfo.acy;
-      const courseUrl = `https://timetable.nycu.edu.tw/?r=main/crsoutline&Acy=${courseAcy}&Sem=${courseSem}&CrsNo=${courseInfo.courseId}&lang=zh-tw`;
+      const courseUrl = `https://timetable.nycu.edu.tw/?r=main/crsoutline&Acy=${courseAcy}&Sem=${courseSem}&CrsNo=${courseInfo.cos_id}&lang=zh-tw`;
       return (
-        <Box key={courseInfo.cos_id} >
+        <ListItem key={courseInfo.cos_id} >
           <Card>
             <CardContent>
             <Typography variant="h5" component="div">
@@ -160,17 +160,28 @@ function SearchResult ({ searchWord , filterTimeSlot}) {
             </Typography>
             </CardContent>
             <CardActions>
-              <Button onClick={() => {this.setState({courseUrl: courseUrl})}}>課程大綱</Button>
+              <Button href={courseUrl}>課程大綱</Button>
             </CardActions>
           </Card>
-        </Box>
+        </ListItem>
       );
   });
   return (
-    <Stack>
+    <List>
       {resultList}
-    </Stack>
+    </List>
   )
+}
+function renderRow(props) {
+  const { index, style } = props;
+
+  return (
+    <ListItem style={style} key={index} component="div" disablePadding>
+      <ListItemButton>
+        <ListItemText primary={`Item ${index + 1}`} />
+      </ListItemButton>
+    </ListItem>
+  );
 }
 
 function SearchWordFilter() {
